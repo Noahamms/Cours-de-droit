@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcards Droit Constitutionnel — Création de la QPC</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Newsreader', 'serif'],
+          },
+          colors: {
+            notion: {
+              bg: '#FFFFFF',
+              darkbg: '#191919',
+              sidebar: '#FBFBFA',
+              darksidebar: '#202020',
+              border: '#E9E9E7',
+              darkborder: '#2E2E2E',
+              text: '#37352F',
+              darktext: '#D4D4D4',
+              muted: '#787774',
+              accent: '#2383E2',
+              card: '#F7F6F3',
+              darkcard: '#252525'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* 3D Flip Card Effect */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D1D5DB;
+      border-radius: 4px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #3F3F46;
+    }
+  </style>
+</head>
+
+<body class="bg-notion-sidebar dark:bg-notion-darkbg text-notion-text dark:text-notion-darktext min-h-full font-sans antialiased flex flex-col items-center justify-between p-3 sm:p-6 transition-colors duration-200 select-none">
+
+  <!-- Main Container designed to fit cleanly inside Notion embeds -->
+  <div class="w-full max-w-2xl bg-notion-bg dark:bg-notion-darkcard border border-notion-border dark:border-notion-darkborder rounded-2xl shadow-sm overflow-hidden flex flex-col">
+    
+    <!-- Top Header Bar -->
+    <header class="p-4 sm:px-6 sm:py-4 border-b border-notion-border dark:border-notion-darkborder flex items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-sm font-semibold">⚖️</span>
+        <div>
+          <h1 class="text-xs sm:text-sm font-semibold tracking-wide uppercase text-notion-muted">Droit Constitutionnel</h1>
+          <h2 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white leading-tight">La Création de la QPC</h2>
+        </div>
+      </div>
+      
+      <!-- Action Controls (Theme, Filter, Info) -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <button id="filterBtn" onclick="toggleReviewMode()" class="px-2.5 py-1 text-xs font-medium rounded-md border border-notion-border dark:border-notion-darkborder hover:bg-gray-100 dark:hover:bg-zinc-800 transition flex items-center gap-1.5" title="Filtrer les cartes à revoir">
+          <span id="filterIndicator" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-zinc-600"></span>
+          <span id="filterText">Toutes</span>
+        </button>
+        <button onclick="toggleDarkMode()" class="p-1.5 rounded-md border border-notion-border dark:border-notion-darkborder hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-300" title="Changer le thème">
+          <svg id="themeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+        <button onclick="openModal()" class="p-1.5 rounded-md border border-notion-border dark:border-notion-darkborder hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-300" title="Code d'intégration Notion">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Progress Indicator & Score Bar -->
+    <div class="px-5 py-3 bg-gray-50/70 dark:bg-zinc-900/40 border-b border-notion-border dark:border-notion-darkborder flex items-center justify-between text-xs text-notion-muted">
+      <div class="flex items-center gap-3">
+        <span id="cardCounter" class="font-medium">1 / 8</span>
+        <div class="w-28 sm:w-36 h-1.5 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: 12.5%"></div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+          ✓ <span id="masteredCount">0</span> maîtrisée(s)
+        </span>
+        <span class="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+          ↻ <span id="reviewCount">0</span> à revoir
+        </span>
+      </div>
+    </div>
+
+    <!-- Flashcard Interactive Area -->
+    <main class="p-4 sm:p-8 flex flex-col items-center justify-center min-h-[360px] sm:min-h-[380px] bg-white dark:bg-[#1f1f1f] relative">
+      <div class="w-full h-80 sm:h-72 perspective-1000 cursor-pointer" onclick="flipCard()">
+        <div id="cardInner" class="relative w-full h-full transform-style-3d transition-transform duration-500 rounded-xl shadow-sm border border-notion-border dark:border-notion-darkborder bg-notion-card dark:bg-notion-darkcard">
+          
+          <!-- Card Front (Question / Theme) -->
+          <div class="absolute inset-0 w-full h-full backface-hidden p-6 sm:p-8 flex flex-col justify-between rounded-xl">
+            <div class="flex justify-between items-start">
+              <span id="cardTag" class="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                Thématique
+              </span>
+              <span class="text-xs text-notion-muted flex items-center gap-1">
+                <span>Cliquez pour révéler</span>
+                <kbd class="px-1.5 py-0.5 text-[10px] bg-gray-200 dark:bg-zinc-700 rounded text-gray-600 dark:text-gray-300 font-mono">Espace</kbd>
+              </span>
+            </div>
+            
+            <div class="my-auto text-center px-2">
+              <h3 id="cardQuestion" class="text-lg sm:text-xl font-semibold leading-snug text-gray-900 dark:text-white">
+                Intitulé de la question ici...
+              </h3>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-gray-200/60 dark:border-zinc-700/60 text-xs text-notion-muted">
+              <span id="cardCategoryHint">Question prioritaire</span>
+              <span class="flex items-center gap-1 font-mono text-gray-400">Recto ↺</span>
+            </div>
+          </div>
+
+          <!-- Card Back (Answer & Legal explanations) -->
+          <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 p-6 sm:p-8 flex flex-col justify-between rounded-xl bg-white dark:bg-zinc-800/90 overflow-y-auto">
+            <div class="flex justify-between items-start">
+              <span class="px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                Réponse & Précisions
+              </span>
+              <span class="text-xs text-notion-muted flex items-center gap-1 font-mono">
+                Verso ↻
+              </span>
+            </div>
+            
+            <div class="my-auto py-3">
+              <p id="cardAnswer" class="text-sm sm:text-base leading-relaxed text-gray-800 dark:text-zinc-200 font-normal">
+                Explication détaillée...
+              </p>
+              <div id="cardLegalBasis" class="mt-3 text-xs bg-slate-50 dark:bg-zinc-900/60 p-2.5 rounded-lg border-l-2 border-blue-500 text-gray-600 dark:text-gray-300 italic">
+                Fondement : ...
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-notion-muted pt-2 border-t border-gray-100 dark:border-zinc-700/50">
+              <span>Évaluez votre rétention ci-dessous</span>
+              <span class="text-[11px] font-mono text-blue-500">Droit constit.</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Controls (Review status & Navigation) -->
+    <footer class="p-4 sm:p-5 bg-notion-bg dark:bg-notion-darkcard border-t border-notion-border dark:border-notion-darkborder flex flex-col sm:flex-row items-center justify-between gap-3">
+      
+      <!-- Status Mark Buttons -->
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+        <button id="btnReview" onclick="markCard(false)" class="flex-1 sm:flex-initial px-3.5 py-2 text-xs sm:text-sm font-medium rounded-lg border border-amber-300/70 dark:border-amber-700/50 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-300 transition flex items-center justify-center gap-1.5">
+          <span>↻ À revoir</span>
+          <span class="text-[10px] text-amber-500 font-mono hidden sm:inline">[1]</span>
+        </button>
+        <button id="btnMastered" onclick="markCard(true)" class="flex-1 sm:flex-initial px-3.5 py-2 text-xs sm:text-sm font-medium rounded-lg border border-emerald-300/70 dark:border-emerald-700/50 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 transition flex items-center justify-center gap-1.5">
+          <span>✓ Maîtrisé</span>
+          <span class="text-[10px] text-emerald-500 font-mono hidden sm:inline">[2]</span>
+        </button>
+      </div>
+
+      <!-- Navigation & Shuffle -->
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+        <button onclick="shuffleCards()" class="p-2 text-xs font-medium rounded-lg border border-notion-border dark:border-notion-darkborder hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 transition" title="Mélanger les cartes">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+
+        <button onclick="prevCard()" class="px-3 py-2 text-xs sm:text-sm font-medium rounded-lg border border-notion-border dark:border-notion-darkborder hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 transition flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+          <span>Préc.</span>
+        </button>
+
+        <button onclick="nextCard()" class="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 transition flex items-center gap-1 shadow-sm">
+          <span>Suiv.</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+      </div>
+
+    </footer>
+  </div>
+
+  <!-- Notion Embed helper instructions modal -->
+  <div id="embedModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-zinc-900 border border-notion-border dark:border-notion-darkborder rounded-2xl max-w-md w-full p-6 shadow-xl relative text-left">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
+          <span>📋 Intégrer dans Notion</span>
+        </h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg">&times;</button>
+      </div>
+      
+      <p class="text-xs text-notion-muted mb-3 leading-relaxed">
+        Pour insérer ce jeu de flashcards interactif dans vos pages de révision Notion :
+      </p>
+
+      <ol class="text-xs text-gray-700 dark:text-zinc-300 space-y-2 list-decimal list-inside mb-4">
+        <li>Hébergez ce fichier HTML sur GitHub Pages, Vercel ou Netlify (gratuit).</li>
+        <li>Dans votre page Notion, tapez <code class="bg-gray-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-blue-600">/embed</code>.</li>
+        <li>Collez l'URL de votre page hébergée.</li>
+        <li>Ajustez la largeur et hauteur selon vos préférences d'affichage.</li>
+      </ol>
+
+      <div class="bg-gray-50 dark:bg-zinc-800/80 p-3 rounded-lg border border-notion-border dark:border-notion-darkborder text-[11px] text-notion-muted font-mono mb-4 overflow-x-auto">
+        Raccourcis clavier inclus :<br>
+        • <kbd>Espace</kbd> ou clic : Retourner la carte<br>
+        • <kbd>→</kbd> / <kbd>←</kbd> : Suivante / Précédente<br>
+        • <kbd>1</kbd> : À revoir | <kbd>2</kbd> : Maîtrisé
+      </div>
+
+      <button onclick="closeModal()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition">
+        Fermer
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer link for Notion aesthetics -->
+  <footer class="mt-4 text-center text-xs text-notion-muted">
+    Conçu pour les étudiants en droit • Notion Style Widget
+  </footer>
+
+  <!-- JavaScript Application Logic -->
+  <script>
+    // Complete legal database on QPC creation
+    const flashcardsData = [
+      {
+        id: 1,
+        tag: "Origine & Révision",
+        category: "Contexte historique",
+        question: "Par quel acte juridique la QPC a-t-elle été formellement introduite dans l'ordre constitutionnel français ?",
+        answer: "La QPC a été instaurée par la <strong>Loi constitutionnelle du 23 juillet 2008</strong> de modernisation des institutions de la Ve République (initiée sous la présidence de Nicolas Sarkozy et les travaux du comité Balladur). Initialement nommée 'exception d'inconstitutionnalité', elle a pris le nom de Question Prioritaire de Constitutionnalité.",
+        legalBasis: "Loi constitutionnelle n° 2008-724 du 23 juillet 2008"
+      },
+      {
+        id: 2,
+        tag: "Calendrier d'application",
+        category: "Entrée en vigueur",
+        question: "À quelle date précise la QPC est-elle entrée en vigueur et via quel texte d'application ?",
+        answer: "La QPC est entrée en vigueur le <strong>1er mars 2010</strong>. Ses modalités pratiques et procédurales ont été fixées par la <strong>Loi organique du 10 décembre 2009</strong> relative à l'application de l'article 61-1 de la Constitution.",
+        legalBasis: "Loi organique n° 2009-1523 du 10 décembre 2009"
+      },
+      {
+        id: 3,
+        tag: "Siège de la norme",
+        category: "Base constitutionnelle",
+        question: "Quel article de la Constitution du 4 octobre 1958 fonde le mécanisme de la QPC et que prévoit-il ?",
+        answer: "L'<strong>article 61-1 de la Constitution</strong> : « Lorsque, à l'occasion d'une instance en cours devant une juridiction, il est soutenu qu'une disposition législative porte atteinte aux <em>droits et libertés que la Constitution garantit</em>, le Conseil constitutionnel peut être saisi de cette question sur renvoi du Conseil d'État ou de la Cour de cassation ».",
+        legalBasis: "Article 61-1 de la Constitution du 4 octobre 1958"
+      },
+      {
+        id: 4,
+        tag: "Révolution juridique",
+        category: "Mutation du contrôle",
+        question: "En quoi la QPC constitue-t-elle une rupture majeure dans la tradition constitutionnelle française ?",
+        answer: "Avant 2008, la France ne connaissait qu'un contrôle <strong>a priori</strong> (art. 61), abstrait et réservé aux autorités politiques avant promulgation. La QPC introduit pour la première fois un <strong>contrôle de constitutionnalité a posteriori</strong> (sur des lois déjà en vigueur), <strong>concret</strong> (né d'un procès réel) et <strong>ouvert aux justiciables</strong> (droit subjectif).",
+        legalBasis: "Rupture avec le dogme rousseauiste de la loi infaillible (loi écran)"
+      },
+      {
+        id: 5,
+        tag: "Procédure & Filtre",
+        category: "Architecture juridictionnelle",
+        question: "Comment s'organise le système du « double filtre » juridictionnel de la QPC ?",
+        answer: "1. <strong>Premier filtre (Juge du fond)</strong> : Tout juge judiciaire ou administratif (sauf cour d'assises) examine sans délai la transmission.<br>2. <strong>Second filtre (Cours suprêmes)</strong> : La Cour de cassation ou le Conseil d'État statue dans un délai de 3 mois.<br>3. <strong>Saisine finale</strong> : Seules ces deux cours suprêmes peuvent saisir le <strong>Conseil constitutionnel</strong>, qui statue à son tour sous 3 mois.",
+        legalBasis: "Art. 23-1 à 23-7 de l'ordonnance n° 58-1067 modifiée"
+      },
+      {
+        id: 6,
+        tag: "Conditions de recevabilité",
+        category: "Les 3 critères de renvoi",
+        question: "Quelles sont les 3 conditions cumulatives exigées pour qu'une QPC soit renvoyée au Conseil constitutionnel ?",
+        answer: "1. La disposition contestée est <strong>applicable au litige</strong> ou à la procédure (ou constitue le fondement des poursuites).<br>2. La disposition n'a <strong>pas déjà été déclarée conforme</strong> à la Constitution dans les motifs et le dispositif d'une décision du Conseil constitutionnel (sauf changement de circonstances).<br>3. La question est <strong>nouvelle</strong> ou présente un caractère <strong>sérieux</strong>.",
+        legalBasis: "Articles 23-2 et 23-4 de l'ordonnance du 7 novembre 1958"
+      },
+      {
+        id: 7,
+        tag: "Sanction & Effets",
+        category: "Portée de la décision",
+        question: "Quel est l'effet juridique d'une déclaration d'inconstitutionnalité prononcée sur le fondement de l'article 62 ?",
+        answer: "La disposition inconstitutionnelle est <strong>abrogée</strong> à compter de la publication de la décision ou d'une date ultérieure fixée par le Conseil.<br>Le Conseil constitutionnel détermine les conditions et limites dans lesquelles les effets que la disposition a produits sont susceptibles d'être remis en cause, garantissant la sécurité juridique.",
+        legalBasis: "Article 62, alinéa 2 de la Constitution"
+      },
+      {
+        id: 8,
+        tag: "Philosophie & Finalités",
+        category: "Objectifs de la réforme",
+        question: "Quels sont les trois grands objectifs assignés à la création de la QPC ?",
+        answer: "1. <strong>Faire prévaloir les droits fondamentaux</strong> garantis par la Constitution au profit direct des justiciables.<br>2. <strong>Purger l'ordre juridique</strong> des lois obsolètes antérieures à 1958 ou non conformes au bloc de constitutionnalité.<br>3. <strong>Assurer la suprématie de la Constitution</strong> dans l'ordre interne face à la prépondérance croissante du contrôle conventionnel (CEDH / UE).",
+        legalBasis: "Rapport Vedel (1993) & Travaux préparatoires Balladur (2007)"
+      }
+    ];
+
+    // State Variables
+    let currentCards = [...flashcardsData];
+    let currentIndex = 0;
+    let isFlipped = false;
+    let reviewModeActive = false;
+    let userProgress = {}; // id -> 'mastered' | 'review'
+
+    // DOM Elements
+    const cardInner = document.getElementById('cardInner');
+    const cardTag = document.getElementById('cardTag');
+    const cardQuestion = document.getElementById('cardQuestion');
+    const cardAnswer = document.getElementById('cardAnswer');
+    const cardLegalBasis = document.getElementById('cardLegalBasis');
+    const cardCategoryHint = document.getElementById('cardCategoryHint');
+    const cardCounter = document.getElementById('cardCounter');
+    const progressBar = document.getElementById('progressBar');
+    const masteredCountEl = document.getElementById('masteredCount');
+    const reviewCountEl = document.getElementById('reviewCount');
+    const filterBtn = document.getElementById('filterBtn');
+    const filterText = document.getElementById('filterText');
+    const filterIndicator = document.getElementById('filterIndicator');
+    const btnMastered = document.getElementById('btnMastered');
+    const btnReview = document.getElementById('btnReview');
+    const embedModal = document.getElementById('embedModal');
+
+    // Load saved preferences if available
+    try {
+      const savedProgress = localStorage.getItem('qpc_progress');
+      if (savedProgress) userProgress = JSON.parse(savedProgress);
+    } catch (e) {
+      // Local storage fallback for restricted iframe contexts
+      console.warn("Local storage not accessible in sandbox");
+    }
+
+    function renderCard() {
+      if (currentCards.length === 0) {
+        cardTag.textContent = "Terminé";
+        cardQuestion.innerHTML = "🎉 Félicitations ! Aucune carte à réviser avec ce filtre.";
+        cardAnswer.textContent = "";
+        cardLegalBasis.textContent = "Sélectionnez 'Toutes' pour recommencer un cycle complet.";
+        cardCounter.textContent = "0 / 0";
+        progressBar.style.width = '100%';
+        return;
+      }
+
+      const card = currentCards[currentIndex];
+      
+      // Reset flip state smoothly
+      if (isFlipped) {
+        cardInner.classList.remove('rotate-y-180');
+        isFlipped = false;
+      }
+
+      // Populate text
+      cardTag.textContent = card.tag;
+      cardCategoryHint.textContent = card.category;
+      cardQuestion.textContent = card.question;
+      cardAnswer.innerHTML = card.answer;
+      cardLegalBasis.innerHTML = `<strong>Fondement :</strong> ${card.legalBasis}`;
+      
+      // Update Counter and Progress
+      cardCounter.textContent = `${currentIndex + 1} / ${currentCards.length}`;
+      const percentage = ((currentIndex + 1) / currentCards.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+
+      // Update button highlights if already marked
+      const status = userProgress[card.id];
+      if (status === 'mastered') {
+        btnMastered.classList.add('ring-2', 'ring-emerald-500');
+        btnReview.classList.remove('ring-2', 'ring-amber-500');
+      } else if (status === 'review') {
+        btnReview.classList.add('ring-2', 'ring-amber-500');
+        btnMastered.classList.remove('ring-2', 'ring-emerald-500');
+      } else {
+        btnMastered.classList.remove('ring-2', 'ring-emerald-500');
+        btnReview.classList.remove('ring-2', 'ring-amber-500');
+      }
+
+      updateScoreBoard();
+    }
+
+    function flipCard() {
+      isFlipped = !isFlipped;
+      if (isFlipped) {
+        cardInner.classList.add('rotate-y-180');
+      } else {
+        cardInner.classList.remove('rotate-y-180');
+      }
+    }
+
+    function nextCard() {
+      if (currentCards.length <= 1) return;
+      currentIndex = (currentIndex + 1) % currentCards.length;
+      renderCard();
+    }
+
+    function prevCard() {
+      if (currentCards.length <= 1) return;
+      currentIndex = (currentIndex - 1 + currentCards.length) % currentCards.length;
+      renderCard();
+    }
+
+    function markCard(isMastered) {
+      if (currentCards.length === 0) return;
+      const card = currentCards[currentIndex];
+      userProgress[card.id] = isMastered ? 'mastered' : 'review';
+
+      try {
+        localStorage.setItem('qpc_progress', JSON.stringify(userProgress));
+      } catch (e) {}
+
+      updateScoreBoard();
+      
+      // Auto move forward after grading
+      setTimeout(() => {
+        nextCard();
+      }, 200);
+    }
+
+    function updateScoreBoard() {
+      let mastered = 0;
+      let review = 0;
+      flashcardsData.forEach(card => {
+        if (userProgress[card.id] === 'mastered') mastered++;
+        if (userProgress[card.id] === 'review') review++;
+      });
+      masteredCountEl.textContent = mastered;
+      reviewCountEl.textContent = review;
+    }
+
+    function shuffleCards() {
+      for (let i = currentCards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentCards[i], currentCards[j]] = [currentCards[j], currentCards[i]];
+      }
+      currentIndex = 0;
+      renderCard();
+    }
+
+    function toggleReviewMode() {
+      reviewModeActive = !reviewModeActive;
+      if (reviewModeActive) {
+        // Filter only items marked as review
+        currentCards = flashcardsData.filter(card => userProgress[card.id] === 'review');
+        filterIndicator.className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse";
+        filterText.textContent = "À revoir";
+      } else {
+        currentCards = [...flashcardsData];
+        filterIndicator.className = "w-2 h-2 rounded-full bg-slate-300 dark:bg-zinc-600";
+        filterText.textContent = "Toutes";
+      }
+      currentIndex = 0;
+      renderCard();
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      try {
+        localStorage.setItem('qpc_theme', isDark ? 'dark' : 'light');
+      } catch (e) {}
+    }
+
+    // Modal controls
+    function openModal() {
+      embedModal.classList.remove('hidden');
+    }
+    function closeModal() {
+      embedModal.classList.add('hidden');
+    }
+
+    // Keyboard support for desktop / laptop users
+    window.addEventListener('keydown', (e) => {
+      // Don't trigger if modal is open
+      if (!embedModal.classList.contains('hidden') && e.key === 'Escape') {
+        closeModal();
+        return;
+      }
+      
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          flipCard();
+          break;
+        case 'ArrowRight':
+          nextCard();
+          break;
+        case 'ArrowLeft':
+          prevCard();
+          break;
+        case 'Digit1':
+          markCard(false);
+          break;
+        case 'Digit2':
+          markCard(true);
+          break;
+      }
+    });
+
+    // Detect system dark mode preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+
+    // Initial render
+    renderCard();
+    updateScoreBoard();
+  </script>
+</body>
+</html>
