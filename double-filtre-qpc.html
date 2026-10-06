@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Le Double Filtre Préjudiciel de la QPC — Schéma & Simulateur</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            terminal: {
+              bg: '#0c0d0e',
+              panel: '#141517',
+              inner: '#1b1d20',
+              border: '#33373b',
+              accent: '#38bdf8',
+              success: '#4ade80',
+              danger: '#f87171',
+              warn: '#fbbf24',
+              dim: '#6b7280',
+              text: '#e5e7eb'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Boîtes de terminal pointillées inspirées de l'ASCII art */
+    .ascii-box {
+      border: 1.5px dashed #4b5563;
+      transition: all 0.25s ease;
+    }
+    .ascii-box:hover, .ascii-box.active-box {
+      border-color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+    }
+    .pulse-glow {
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      animation: pulseAnim 2s infinite ease-in-out;
+    }
+    @keyframes pulseAnim {
+      0%, 100% { border-color: #38bdf8; }
+      50% { border-color: #818cf8; }
+    }
+    /* Flèches de flux SVG animées */
+    .flow-path {
+      stroke-dasharray: 6;
+      animation: dash 1s linear infinite;
+    }
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -12;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-terminal-bg text-terminal-text min-h-full font-mono antialiased p-3 sm:p-6 flex flex-col items-center justify-start select-none">
+
+  <main class="w-full max-w-4xl bg-terminal-panel border border-terminal-border rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+    
+    <!-- En-tête Terminal épuré -->
+    <header class="p-4 sm:px-6 py-3.5 border-b border-terminal-border flex flex-wrap items-center justify-between gap-3 bg-terminal-inner/60">
+      <div class="flex items-center space-x-2.5">
+        <span class="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+        <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+        <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+        <span class="text-xs text-terminal-dim ml-2 font-semibold tracking-wider">PROCÉDURE ART. 61-1 CONST.</span>
+      </div>
+
+      <!-- Navigation d'onglets intégrée -->
+      <div class="flex rounded-lg bg-black/40 p-1 border border-terminal-border text-xs">
+        <button id="btnTabSimu" onclick="setMode('simulator')" class="px-3 py-1 rounded bg-terminal-border text-white font-medium transition">
+          Simulateur QPC
+        </button>
+        <button id="btnTabExplorer" onclick="setMode('explorer')" class="px-3 py-1 text-terminal-dim hover:text-white transition">
+          Fiches & Délais
+        </button>
+        <button id="btnTabQuiz" onclick="setMode('quiz')" class="px-3 py-1 text-terminal-dim hover:text-white transition">
+          Quiz
+        </button>
+      </div>
+    </header>
+
+    <section class="p-4 sm:p-6 flex flex-col items-center border-b border-terminal-border relative bg-[#0e0f11]">
+      <div class="text-center mb-6">
+        <h1 class="text-xs sm:text-sm tracking-[0.25em] text-slate-300 font-semibold uppercase">
+          LE DOUBLE FILTRE PRÉJUDICIEL DE LA QPC
+        </h1>
+        <p id="systemStatus" class="text-[11px] text-terminal-dim mt-1">
+          Cliquez sur une juridiction pour l'analyser ou démarrez une simulation interactive.
+        </p>
+      </div>
+
+      <!-- Schéma visuel haute fidélité -->
+      <div class="w-full max-w-2xl relative px-2 py-4">
+        
+        <!-- Étage 1 : Juge du fond <====> Conseil d'État / Cour de Cassation -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-4 items-center">
+          
+          <!-- BOITE 1 : Juge du fond -->
+          <div id="boxJugeFond" onclick="inspectCourt('fond')" class="md:col-span-5 ascii-box p-4 rounded-xl bg-terminal-inner cursor-pointer text-left hover:scale-[1.01] transition-transform">
+            <div class="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>Instance Initiale</span>
+              <span class="text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-800">1er filtre</span>
+            </div>
+            <h2 class="text-xs sm:text-sm font-bold text-white tracking-wide leading-tight">
+              JUGE DU FOND
+            </h2>
+            <p class="text-[11px] text-zinc-400 mt-1 leading-snug">
+              (Ordre judiciaire ou administratif)
+            </p>
+            <div class="mt-2 text-[10px] text-terminal-dim">Mémoire distinct & écrit requis</div>
+          </div>
+
+          <!-- LIAISONS 1 & 2 : Transmission (aller) & Renvoi/Refus (retour) -->
+          <div class="md:col-span-2 flex flex-col items-center justify-center space-y-3 py-1">
+            <!-- Transmission Aller -->
+            <div id="linkTransmission" class="w-full text-center group cursor-pointer" onclick="showCriterionDetail('transmission')">
+              <span class="text-[10px] text-slate-400 block tracking-wider uppercase mb-0.5 font-medium group-hover:text-cyan-400">
+                Transmission →
+              </span>
+              <div class="w-full h-[2px] bg-zinc-600 relative overflow-hidden rounded">
+                <div id="dotTransmission" class="hidden absolute top-0 bottom-0 left-0 w-8 bg-cyan-400 rounded-full animate-[pulse_1s_infinite]"></div>
+              </div>
+            </div>
+
+            <!-- Retour Non-Renvoi -->
+            <div id="linkRetour" class="w-full text-center group cursor-pointer" onclick="showCriterionDetail('retour')">
+              <div class="w-full h-[2px] bg-zinc-600 relative overflow-hidden rounded">
+                <div id="dotRetour" class="hidden absolute top-0 bottom-0 right-0 w-8 bg-rose-400 rounded-full animate-[pulse_1s_infinite]"></div>
+              </div>
+              <span class="text-[10px] text-zinc-400 block tracking-wider uppercase mt-0.5 group-hover:text-rose-400">
+                ← Renvoi ou non
+              </span>
+            </div>
+          </div>
+
+          <!-- BOITE 2 : Conseil d'État / Cour de Cassation -->
+          <div id="boxFiltre" onclick="inspectCourt('cours')" class="md:col-span-5 ascii-box p-4 rounded-xl bg-terminal-inner cursor-pointer text-left hover:scale-[1.01] transition-transform">
+            <div class="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>Cours Suprêmes</span>
+              <span class="text-[9px] bg-indigo-950/80 px-1.5 py-0.5 rounded border border-indigo-800">2e filtre</span>
+            </div>
+            <h2 class="text-xs sm:text-sm font-bold text-white tracking-wide leading-tight">
+              CONSEIL D'ÉTAT OU COUR DE CASSATION
+            </h2>
+            <p class="text-[11px] text-zinc-400 mt-1">
+              (Filtre souverain de 3 mois)
+            </p>
+            <div class="mt-2 text-[10px] text-terminal-dim">Juge le sérieux ou la nouveauté</div>
+          </div>
+
+        </div>
+
+        <!-- Liaison verticale : Saisine vers Conseil Constitutionnel -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 my-2 sm:my-3">
+          <div class="hidden md:block md:col-span-7"></div>
+          <div class="md:col-span-5 flex flex-col items-center justify-center">
+            <div id="linkSaisine" class="flex flex-col items-center cursor-pointer group" onclick="showCriterionDetail('saisine')">
+              <span class="text-[10px] text-slate-400 uppercase tracking-widest group-hover:text-emerald-400">
+                | Saisine
+              </span>
+              <div class="h-8 w-[2px] bg-zinc-600 my-0.5 relative">
+                <div id="dotSaisine" class="hidden absolute left-0 right-0 top-0 h-4 bg-emerald-400 rounded-full animate-bounce"></div>
+              </div>
+              <span class="text-xs text-zinc-500">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Étage 2 : Conseil Constitutionnel & Décision finale -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          
+          <!-- Liaison Retour : Décision sur la constitutionnalité (vers Juge du fond) -->
+          <div class="md:col-span-7 p-3 rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40 text-left flex items-start gap-2.5">
+            <span class="text-emerald-400 text-sm">↺</span>
+            <div class="text-[11px] text-zinc-300 leading-snug">
+              <span class="font-semibold text-white tracking-wide block uppercase text-[10px] text-emerald-400">
+                Décision sur la constitutionnalité
+              </span>
+              Renvoi de la décision finale au Juge du fond pour trancher le procès civil/pénal/admin (Effet <span class="italic text-slate-200">erga omnes</span> art. 62).
+            </div>
+          </div>
+
+          <!-- BOITE 3 : Conseil Constitutionnel -->
+          <div id="boxCC" onclick="inspectCourt('cc')" class="md:col-span-5 ascii-box p-4 rounded-xl bg-terminal-inner cursor-pointer text-left hover:scale-[1.01] transition-transform">
+            <div class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>Juridiction Suprême</span>
+              <span class="text-[9px] bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800">Délai 3 mois</span>
+            </div>
+            <h2 class="text-xs sm:text-sm font-bold text-white tracking-wide leading-tight">
+              CONSEIL CONSTITUTIONNEL
+            </h2>
+            <p class="text-[11px] text-zinc-400 mt-1">
+              Conformité ou Abrogation immédiate / différée
+            </p>
+            <div class="mt-2 text-[10px] text-terminal-dim">Autorité absolue de la chose jugée</div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    
+    <!-- MODE 1 : SIMULATEUR INTERACTIF PAS-À-PAS -->
+    <section id="panelSimulator" class="p-4 sm:p-6 bg-terminal-panel space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+          <span>⚡</span> Simulateur de parcours procédural
+        </h3>
+        <button onclick="resetSimulator()" class="text-[11px] text-terminal-dim hover:text-white underline">
+          Réinitialiser le cas
+        </button>
+      </div>
+
+      <!-- Scénario interactif dynamique -->
+      <div id="simuBox" class="p-4 rounded-xl bg-terminal-inner border border-terminal-border space-y-3">
+        <div class="text-xs text-zinc-300 leading-relaxed" id="simuStepText">
+          Vous êtes justiciable dans un litige en cours. Vous estimez qu'une disposition législative viole vos droits et libertés constitutionnels. Que voulez-vous faire ?
+        </div>
+        
+        <div id="simuButtons" class="flex flex-wrap gap-2 pt-1">
+          <button onclick="simuStep1(true)" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition">
+            1. Déposer un mémoire écrit et motivé (QPC)
+          </button>
+          <button onclick="simuStep1(false)" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition">
+            Soulever la QPC oralement à l'audience
+          </button>
+        </div>
+      </div>
+
+      <!-- Légende des 3 critères cumulatifs -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px]">
+        <div id="crit1" class="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400">
+          <span class="font-bold block text-white mb-0.5">1. Applicabilité</span>
+          Disposition applicable au litige en cours.
+        </div>
+        <div id="crit2" class="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400">
+          <span class="font-bold block text-white mb-0.5">2. Non-conformité préalable</span>
+          Non déjà déclarée conforme (sauf chang. circonstances).
+        </div>
+        <div id="crit3" class="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400">
+          <span class="font-bold block text-white mb-0.5">3. Sérieux ou Nouveauté</span>
+          Question nouvelle ou ayant un caractère sérieux.
+        </div>
+      </div>
+    </section>
+
+    <!-- MODE 2 : EXPLORATEUR JURIDIQUE & DÉLAIS -->
+    <section id="panelExplorer" class="hidden p-4 sm:p-6 bg-terminal-panel space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+          <span>📖</span> Analyse des acteurs & délais de rigueur
+        </h3>
+        <span class="text-[11px] text-terminal-dim">Cliquez sur une fiche ci-dessous</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <button onclick="inspectCourt('fond')" class="p-3.5 rounded-xl border border-terminal-border bg-terminal-inner text-left hover:border-cyan-400 transition">
+          <div class="font-bold text-white mb-1">Le Juge du fond</div>
+          <p class="text-zinc-400 text-[11px]">Transmission sans délai • Examen des critères 1 & 2 • Sursis à statuer.</p>
+        </button>
+
+        <button onclick="inspectCourt('cours')" class="p-3.5 rounded-xl border border-terminal-border bg-terminal-inner text-left hover:border-indigo-400 transition">
+          <div class="font-bold text-white mb-1">CE / Cour de Cassation</div>
+          <p class="text-zinc-400 text-[11px]">Délai strict de 3 mois • Examen approfondi du caractère sérieux/nouveau.</p>
+        </button>
+
+        <button onclick="inspectCourt('cc')" class="p-3.5 rounded-xl border border-terminal-border bg-terminal-inner text-left hover:border-emerald-400 transition">
+          <div class="font-bold text-white mb-1">Conseil Constitutionnel</div>
+          <p class="text-zinc-400 text-[11px]">Délai strict de 3 mois • Audience publique • Abrogation ou réserve d'interprétation.</p>
+        </button>
+      </div>
+
+      <!-- Fiche détaillée affichée dynamiquement -->
+      <div id="inspectorDetails" class="p-4 rounded-xl border border-slate-700 bg-zinc-900 text-xs space-y-2 leading-relaxed text-zinc-300">
+        <h4 id="inspectTitle" class="font-bold text-sm text-white">Sélectionnez une institution</h4>
+        <p id="inspectBody">Cliquez sur un des éléments pour voir son fondement textuel (art. 23-1 à 23-7 de l'ordonnance de 1958) et ses attributions précises.</p>
+      </div>
+    </section>
+
+    <!-- MODE 3 : QUIZ DE VALIDATION RAPIDE -->
+    <section id="panelQuiz" class="hidden p-4 sm:p-6 bg-terminal-panel space-y-4">
+      <div class="flex items-center justify-between text-xs text-terminal-dim">
+        <span id="quizProg">Question 1 / 3</span>
+        <span id="quizScore" class="font-bold text-emerald-400">Score : 0</span>
+      </div>
+
+      <div class="p-5 rounded-xl bg-terminal-inner border border-terminal-border space-y-3">
+        <h3 id="quizTitle" class="text-sm sm:text-base font-bold text-white">
+          Quel est le délai accordé au Conseil d'État ou à la Cour de cassation pour statuer sur le renvoi d'une QPC ?
+        </h3>
+        <div id="quizChoices" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2"></div>
+        <div id="quizFeedback" class="hidden text-xs p-3 rounded-lg border"></div>
+      </div>
+
+      <div class="flex justify-end">
+        <button id="quizNextBtn" onclick="nextQuizQuestion()" class="hidden px-4 py-1.5 rounded-lg bg-white text-black text-xs font-semibold transition">
+          Question suivante →
+        </button>
+      </div>
+    </section>
+
+    <footer class="p-3 sm:px-6 bg-black/60 border-t border-terminal-border text-[11px] text-terminal-dim flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>Compatible intégration Notion (/embed)</span>
+      </div>
+      <button onclick="copyWidgetUrl()" class="px-2.5 py-1 rounded border border-zinc-700 hover:bg-zinc-800 text-zinc-300 transition flex items-center gap-1.5">
+        <span>📋 Copier l'URL du fichier</span>
+        <span id="copyConfirm" class="text-emerald-400 hidden">✓</span>
+      </button>
+    </footer>
+
+  </main>
+
+  <script>
+    // État global
+    let currentMode = 'simulator';
+    let quizIdx = 0;
+    let quizPoints = 0;
+
+    // Bascule des onglets
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('panelSimulator').classList.toggle('hidden', mode !== 'simulator');
+      document.getElementById('panelExplorer').classList.toggle('hidden', mode !== 'explorer');
+      document.getElementById('panelQuiz').classList.toggle('hidden', mode !== 'quiz');
+
+      const bSimu = document.getElementById('btnTabSimu');
+      const bExplo = document.getElementById('btnTabExplorer');
+      const bQuiz = document.getElementById('btnTabQuiz');
+
+      bSimu.className = mode === 'simulator' ? "px-3 py-1 rounded bg-terminal-border text-white font-medium" : "px-3 py-1 text-terminal-dim hover:text-white";
+      bExplo.className = mode === 'explorer' ? "px-3 py-1 rounded bg-terminal-border text-white font-medium" : "px-3 py-1 text-terminal-dim hover:text-white";
+      bQuiz.className = mode === 'quiz' ? "px-3 py-1 rounded bg-terminal-border text-white font-medium" : "px-3 py-1 text-terminal-dim hover:text-white";
+
+      if (mode === 'quiz') loadQuizQuestion();
+    }
+
+    // --- MOTEUR DU SIMULATEUR ---
+    function resetSimulator() {
+      clearHighlights();
+      document.getElementById('simuStepText').innerHTML = "Vous êtes justiciable dans un litige en cours. Vous estimez qu'une disposition législative viole vos droits et libertés constitutionnels. Que voulez-vous faire ?";
+      document.getElementById('simuButtons').innerHTML = `
+        <button onclick="simuStep1(true)" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition">
+          1. Déposer un mémoire écrit et motivé (QPC)
+        </button>
+        <button onclick="simuStep1(false)" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition">
+          Soulever la QPC oralement à l'audience
+        </button>
+      `;
+      document.getElementById('systemStatus').textContent = "Simulateur réinitialisé. Suivez la procédure pas à pas.";
+    }
+
+    function clearHighlights() {
+      ['boxJugeFond', 'boxFiltre', 'boxCC'].forEach(id => {
+        document.getElementById(id).classList.remove('pulse-glow', 'active-box');
+      });
+      document.getElementById('dotTransmission').classList.add('hidden');
+      document.getElementById('dotRetour').classList.add('hidden');
+      document.getElementById('dotSaisine').classList.add('hidden');
+    }
+
+    function simuStep1(isWritten) {
+      if (!isWritten) {
+        document.getElementById('simuStepText').innerHTML = "<strong>❌ Irrecevabilité immédiate :</strong> La QPC <em>doit obligatoirement</em> être présentée dans un écrit distinct et motivé (art. 23-1 de l'ordonnance du 7 nov. 1958). Le juge ne peut pas en tenir compte.";
+        document.getElementById('simuButtons').innerHTML = `
+          <button onclick="resetSimulator()" class="px-3 py-1.5 rounded-lg bg-zinc-700 text-white text-xs font-medium">Recommencer</button>
+        `;
+        return;
+      }
+
+      document.getElementById('boxJugeFond').classList.add('active-box');
+      document.getElementById('simuStepText').innerHTML = "<strong>✓ Écrit distinct validé devant le juge du fond.</strong> Le juge examine sans délai si la disposition est applicable au litige et n'a pas déjà été déclarée conforme. Remplissez-vous ces deux premiers critères ?";
+      
+      document.getElementById('simuButtons').innerHTML = `
+        <button onclick="simuStep2(true)" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium">
+          Oui, la loi s'applique directement au procès
+        </button>
+        <button onclick="simuStep2(false)" class="px-3 py-1.5 rounded-lg bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs font-medium">
+          Non, la loi n'a pas de rapport direct avec le litige
+        </button>
+      `;
+    }
+
+    function simuStep2(criteriaMet) {
+      if (!criteriaMet) {
+        document.getElementById('simuStepText').innerHTML = "<strong>❌ Refus de transmission du juge du fond :</strong> La disposition n'étant pas applicable au litige, le premier filtre est fermé. Le juge du fond poursuit son jugement sans transmettre la QPC.";
+        document.getElementById('simuButtons').innerHTML = `<button onclick="resetSimulator()" class="px-3 py-1.5 rounded-lg bg-zinc-700 text-white text-xs">Recommencer</button>`;
+        return;
+      }
+
+      // Animation vers la Cour Suprême
+      document.getElementById('dotTransmission').classList.remove('hidden');
+      document.getElementById('boxFiltre').classList.add('pulse-glow');
+      document.getElementById('systemStatus').textContent = "→ Transmission effectuée vers le Conseil d'État ou la Cour de Cassation !";
+
+      document.getElementById('simuStepText').innerHTML = "<strong>🚀 Transmission au Conseil d'État ou à la Cour de Cassation.</strong> La cour suprême dispose de <strong>3 mois</strong> pour vérifier le 3e critère : La question est-elle <em>nouvelle</em> ou présente-t-elle un caractère <em>sérieux</em> ?";
+
+      document.getElementById('simuButtons').innerHTML = `
+        <button onclick="simuStep3(true)" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium">
+          La question est jugée sérieuse / nouvelle
+        </button>
+        <button onclick="simuStep3(false)" class="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-600 text-white text-xs font-medium">
+          La question est jugée dépourvue de caractère sérieux
+        </button>
+      `;
+    }
+
+    function simuStep3(isSerious) {
+      document.getElementById('dotTransmission').classList.add('hidden');
+
+      if (!isSerious) {
+        document.getElementById('dotRetour').classList.remove('hidden');
+        document.getElementById('systemStatus').textContent = "← Décision de non-renvoi : retour au juge du fond.";
+        document.getElementById('simuStepText').innerHTML = "<strong>⏹ Non-renvoi :</strong> La Cour de cassation ou le Conseil d'État estime la question non sérieuse. La décision de refus est notifiée au juge du fond qui doit alors trancher le litige en appliquant la loi contestée.";
+        document.getElementById('simuButtons').innerHTML = `<button onclick="resetSimulator()" class="px-3 py-1.5 rounded-lg bg-zinc-700 text-white text-xs">Recommencer une simulation</button>`;
+        return;
+      }
+
+      // Saisine du Conseil constitutionnel
+      document.getElementById('dotSaisine').classList.remove('hidden');
+      document.getElementById('boxCC').classList.add('pulse-glow');
+      document.getElementById('systemStatus').textContent = "▼ Saisine du Conseil constitutionnel ! Audience sous 3 mois.";
+
+      document.getElementById('simuStepText').innerHTML = "<strong>⚖️ Saisine officielle du Conseil Constitutionnel.</strong> Après audience publique contradictoire (avec plaidoiries des avocats et du SGG), quelle sera l'issue prononcée par les Sages ?";
+
+      document.getElementById('simuButtons').innerHTML = `
+        <button onclick="simuStep4('abrogation')" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium">
+          Déclaration d'inconstitutionnalité (Abrogation art. 62)
+        </button>
+        <button onclick="simuStep4('conforme')" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-medium">
+          Déclaration de conformité
+        </button>
+      `;
+    }
+
+    function simuStep4(outcome) {
+      if (outcome === 'abrogation') {
+        document.getElementById('simuStepText').innerHTML = "<strong>🏆 Victoire du requérant (Abrogation) :</strong> La loi est déclarée contraire aux droits et libertés garantis par la Constitution. Elle disparaît de l'ordre juridique (effet <em>erga omnes</em>) immédiatement ou à une date fixée. Le juge du fond ne peut plus l'appliquer à votre litige !";
+      } else {
+        document.getElementById('simuStepText').innerHTML = "<strong>🏛️ Déclaration de conformité :</strong> Le Conseil constitutionnel juge la disposition conforme. Le juge du fond applique la loi validée pour rendre son jugement sur votre litige.";
+      }
+      document.getElementById('systemStatus').textContent = "Procédure complète achevée.";
+      document.getElementById('simuButtons').innerHTML = `
+        <button onclick="resetSimulator()" class="px-3 py-1.5 rounded-lg bg-cyan-700 text-white text-xs font-medium">Tester un autre scénario</button>
+      `;
+    }
+
+    // --- EXPLORATEUR DE COURS ---
+    const courtData = {
+      fond: {
+        title: "Le Juge du Fond (Ordre judiciaire ou administratif)",
+        content: "Tout tribunal (tribunal judiciaire, tribunal administratif, cour d'appel, etc., à l'exception de la cour d'assises) peut être saisi d'une QPC. Le requérant doit impérativement soulever le moyen par un <strong>mémoire distinct et motivé</strong>. Le juge statue 'sans délai' pour vérifier que la loi s'applique au litige et n'a pas déjà été jugée conforme. En cas de succès, il transmet la question à sa cour suprême respective et sursoit à statuer sur le fond."
+      },
+      cours: {
+        title: "Le Conseil d'État ou la Cour de Cassation (Le 2e Filtre)",
+        content: "Les deux juridictions suprêmes disposent d'un <strong>délai couperet de 3 mois</strong>. Elles effectuent le tri qualitatif : la question doit être <em>nouvelle</em> ou présenter un <em>caractère sérieux</em>. Si les 3 critères sont satisfaits, la cour a l'obligation légale de saisir le Conseil constitutionnel. En cas de refus, aucun recours n'est possible contre cette décision de non-renvoi."
+      },
+      cc: {
+        title: "Le Conseil Constitutionnel (Le Juge Constitutionnel)",
+        content: "Saisi uniquement par le CE ou la Cour de cassation, il dispose à son tour d'un <strong>délai strict de 3 mois</strong>. La procédure est juridictionnalisée (audiences publiques télévisées, échange de mémoires, intervention du SGG). S'il déclare la disposition inconstitutionnelle (art. 62), la loi est <strong>abrogée</strong> avec un effet absolu (<em>erga omnes</em>)."
+      }
+    };
+
+    function inspectCourt(key) {
+      setMode('explorer');
+      const data = courtData[key];
+      document.getElementById('inspectTitle').innerHTML = data.title;
+      document.getElementById('inspectBody').innerHTML = data.content;
+      
+      ['boxJugeFond', 'boxFiltre', 'boxCC'].forEach(id => document.getElementById(id).classList.remove('pulse-glow'));
+      if (key === 'fond') document.getElementById('boxJugeFond').classList.add('pulse-glow');
+      if (key === 'cours') document.getElementById('boxFiltre').classList.add('pulse-glow');
+      if (key === 'cc') document.getElementById('boxCC').classList.add('pulse-glow');
+    }
+
+    function showCriterionDetail(type) {
+      setMode('explorer');
+      if (type === 'transmission') {
+        document.getElementById('inspectTitle').textContent = "Flux : Transmission du Juge du fond vers les Cours suprêmes";
+        document.getElementById('inspectBody').innerHTML = "Le juge du fond transmet sans délai après vérification sommaire des critères 1 et 2. L'instance principale est suspendue dans l'attente du renvoi.";
+      } else if (type === 'retour') {
+        document.getElementById('inspectTitle').textContent = "Flux : Décision de non-renvoi (Refus du filtre)";
+        document.getElementById('inspectBody').innerHTML = "Si la Cour de cassation ou le Conseil d'État estime que la question n'est ni nouvelle ni sérieuse, l'affaire retourne au juge du fond qui tranche le procès en appliquant la loi.";
+      } else {
+        document.getElementById('inspectTitle').textContent = "Flux : Saisine du Conseil constitutionnel";
+        document.getElementById('inspectBody').innerHTML = "Décision de renvoi positive des cours suprêmes. Le Conseil constitutionnel est valablement saisi et le greffe en informe l'ensemble des pouvoirs publics.";
+      }
+    }
+
+    // --- QUIZ DE VALIDATION ---
+    const quizData = [
+      {
+        q: "Quel est le délai accordé au Conseil d'État ou à la Cour de cassation pour statuer sur le renvoi d'une QPC ?",
+        options: ["1 mois", "3 mois", "6 mois", "Aucun délai légal"],
+        correct: 1,
+        exp: "L'article 23-4 de l'ordonnance de 1958 fixe un délai strict de 3 mois aux cours suprêmes pour statuer."
+      },
+      {
+        q: "Quelle condition formelle est requise pour soulever une QPC devant le premier juge ?",
+        options: ["Un appel téléphonique au greffe", "Un mémoire écrit, distinct et motivé", "Une simple mention orale au procès-verbal", "Une lettre recommandée au Président de la République"],
+        correct: 1,
+        exp: "À peine d'irrecevabilité, la QPC doit toujours faire l'objet d'un écrit séparé et argumenté."
+      },
+      {
+        q: "Quelle est la conséquence d'une décision d'inconstitutionnalité selon l'article 62 de la Constitution ?",
+        options: ["La loi est suspendue 15 jours", "La loi est abrogée avec autorité absolue de chose jugée", "La loi reste en vigueur mais une amende est due", "Le juge du fond est destitué"],
+        correct: 1,
+        exp: "La disposition inconstitutionnelle est abrogée à compter de la publication de la décision ou d'une date ultérieure fixée par le Conseil."
+      }
+    ];
+
+    function loadQuizQuestion() {
+      const cur = quizData[quizIdx];
+      document.getElementById('quizProg').textContent = `Question ${quizIdx + 1} / ${quizData.length}`;
+      document.getElementById('quizTitle').textContent = cur.q;
+      document.getElementById('quizFeedback').className = "hidden text-xs p-3 rounded-lg border";
+      document.getElementById('quizNextBtn').classList.add('hidden');
+
+      const choicesBox = document.getElementById('quizChoices');
+      choicesBox.innerHTML = '';
+      cur.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = "p-2.5 rounded-lg border border-terminal-border bg-terminal-panel hover:bg-zinc-800 text-xs text-left transition";
+        btn.textContent = opt;
+        btn.onclick = () => answerQuiz(idx);
+        choicesBox.appendChild(btn);
+      });
+    }
+
+    function answerQuiz(idx) {
+      const cur = quizData[quizIdx];
+      const feedback = document.getElementById('quizFeedback');
+      const isRight = (idx === cur.correct);
+
+      if (isRight) {
+        quizPoints++;
+        feedback.className = "text-xs p-3 rounded-lg border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 block";
+        feedback.innerHTML = `<strong>✓ Bravo !</strong> ${cur.exp}`;
+      } else {
+        feedback.className = "text-xs p-3 rounded-lg border border-rose-500/50 bg-rose-950/40 text-rose-300 block";
+        feedback.innerHTML = `<strong>✗ Incorrect.</strong> ${cur.exp}`;
+      }
+
+      document.getElementById('quizScore').textContent = `Score : ${quizPoints} / ${quizData.length}`;
+      document.getElementById('quizNextBtn').classList.remove('hidden');
+      document.querySelectorAll('#quizChoices button').forEach(b => b.disabled = true);
+    }
+
+    function nextQuizQuestion() {
+      quizIdx++;
+      if (quizIdx < quizData.length) {
+        loadQuizQuestion();
+      } else {
+        document.getElementById('quizTitle').textContent = `🎉 Entraînement terminé ! Résultat : ${quizPoints} / ${quizData.length}`;
+        document.getElementById('quizChoices').innerHTML = '';
+        document.getElementById('quizFeedback').className = "hidden";
+        document.getElementById('quizNextBtn').classList.add('hidden');
+      }
+    }
+
+    // Copie de l'URL pour Notion
+    function copyWidgetUrl() {
+      const url = window.location.href;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => showCopied());
+      } else {
+        const tempInput = document.createElement("input");
+        tempInput.value = url;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        showCopied();
+      }
+    }
+
+    function showCopied() {
+      const el = document.getElementById('copyConfirm');
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 2000);
+    }
+
+    // Lancement par défaut
+    resetSimulator();
+  </script>
+</body>
+</html>
