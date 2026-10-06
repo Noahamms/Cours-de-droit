@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>L'équilibre politique du 14 août 2026 — Conseil Constitutionnel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            notion: {
+              black: '#121212',
+              card: '#18181b',
+              inner: '#27272a',
+              border: '#3f3f46',
+              lightBg: '#f8fafc',
+              lightCard: '#ffffff',
+              lightBorder: '#e2e8f0',
+              accent: '#3b82f6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .ascii-border {
+      border: 1px dashed #52525b;
+    }
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 dark:bg-notion-black text-slate-800 dark:text-zinc-200 min-h-full font-sans antialiased p-3 sm:p-6 transition-colors duration-200 flex flex-col items-center justify-start">
+
+  <main class="w-full max-w-3xl bg-white dark:bg-notion-card border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden flex flex-col">
+    
+    <!-- En-tête style Terminal / Notion -->
+    <header class="p-4 sm:p-5 border-b border-slate-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-zinc-900/60">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-400">DECISION DU CONSEIL CONSTITUTIONNEL</span>
+        </div>
+        <h1 class="font-mono text-sm sm:text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+          L'ÉQUILIBRE POLITIQUE DU 14 AOÛT 2026
+        </h1>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Thème clair / sombre -->
+        <button onclick="toggleTheme()" class="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 hover:bg-slate-200 dark:hover:bg-zinc-800 text-xs font-mono transition" title="Basculer le mode">
+          <span id="themeEmoji">🌙</span>
+        </button>
+        <!-- Onglets interactifs -->
+        <div class="flex rounded-lg bg-slate-200 dark:bg-zinc-800 p-0.5 text-xs font-medium">
+          <button id="tabTable" onclick="setTab('table')" class="px-2.5 py-1 rounded-md bg-white dark:bg-zinc-700 shadow-sm text-slate-900 dark:text-white transition">Tableau</button>
+          <button id="tabQuiz" onclick="setTab('quiz')" class="px-2.5 py-1 rounded-md text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition">Mode Quiz</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 1 : VUE TABLEAU & SYNTHÈSE -->
+    <section id="viewTable" class="p-4 sm:p-6 space-y-4">
+      
+      <!-- Barre d'outils et filtres rapides -->
+      <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span class="text-slate-500 dark:text-zinc-400">Filtrer par issue juridique :</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button onclick="filterDecisions('all')" class="filter-btn active px-2.5 py-1 rounded-md border border-slate-300 dark:border-zinc-700 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 font-medium">Toutes (3)</button>
+          <button onclick="filterDecisions('validee')" class="filter-btn px-2.5 py-1 rounded-md border border-slate-300 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 font-medium text-emerald-600 dark:text-emerald-400">Validées (2)</button>
+          <button onclick="filterDecisions('censuree')" class="filter-btn px-2.5 py-1 rounded-md border border-slate-300 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 font-medium text-rose-600 dark:text-rose-400">Censurées (1)</button>
+        </div>
+      </div>
+
+      <!-- Rendu du tableau ASCII reproduit en composants propres -->
+      <div class="border border-slate-300 dark:border-zinc-700 rounded-xl overflow-hidden divide-y divide-slate-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900/40">
+        
+        <!-- Ligne d'en-tête du tableau -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 text-xs font-mono uppercase bg-slate-50 dark:bg-zinc-800/60 p-3 text-slate-500 dark:text-zinc-400">
+          <div class="sm:col-span-6 font-semibold">Loi & Issue constitutionnelle</div>
+          <div class="sm:col-span-6 font-semibold mt-1 sm:mt-0">Positionnement politique</div>
+        </div>
+
+        <div id="tableBody" class="divide-y divide-slate-200 dark:divide-zinc-800">
+          <!-- Les 3 lignes sont injectées dynamiquement -->
+        </div>
+      </div>
+
+      <!-- Fiche détails contextuels extensible -->
+      <div id="detailCard" class="hidden p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-zinc-850/80 text-xs space-y-2">
+        <div class="flex items-center justify-between">
+          <h4 id="detailTitle" class="font-bold text-sm text-slate-900 dark:text-white">Détails de la décision</h4>
+          <button onclick="closeDetails()" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200">✕ Fermer</button>
+        </div>
+        <p id="detailContent" class="text-slate-700 dark:text-zinc-300 leading-relaxed"></p>
+        <div id="detailBasis" class="text-[11px] font-mono text-blue-600 dark:text-blue-400 pt-1"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 2 : VUE QUIZ / MEMORISATION RAPIDE -->
+    <section id="viewQuiz" class="hidden p-4 sm:p-6 flex flex-col items-center">
+      <div class="w-full max-w-lg space-y-4">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
+          <span id="quizCounter">Question 1 / 3</span>
+          <span id="quizScoreBadge" class="font-mono">Score : 0</span>
+        </div>
+
+        <!-- Carte Quiz interactive -->
+        <div class="p-6 rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/80 text-center space-y-4 shadow-sm">
+          <div class="inline-block px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-mono font-medium">
+            Test de mémorisation
+          </div>
+          <h3 id="quizQuestion" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
+            Quel a été le sort constitutionnel de la loi « Aide à mourir » ?
+          </h3>
+
+          <div id="quizOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+            <!-- Boutons de choix dynamiques -->
+          </div>
+
+          <div id="quizFeedback" class="hidden text-xs p-3 rounded-lg border text-left leading-relaxed"></div>
+        </div>
+
+        <div class="flex justify-between items-center pt-2">
+          <button onclick="resetQuiz()" class="text-xs text-slate-500 dark:text-zinc-400 hover:underline">Recommencer</button>
+          <button id="nextQuizBtn" onclick="nextQuizStep()" class="hidden px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium transition">
+            Loi suivante →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="p-3 sm:px-6 bg-slate-50 dark:bg-zinc-900/80 border-t border-slate-200 dark:border-zinc-800 text-[11px] font-mono text-slate-500 dark:text-zinc-400 flex flex-wrap items-center justify-between gap-2">
+      <span class="flex items-center gap-1.5">
+        <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-[10px]">Espace</kbd>
+        <span>Afficher l'analyse constitutionnelle</span>
+      </span>
+      <span>Ve République • Fiche Droit / Notion</span>
+    </footer>
+
+  </main>
+
+  <script>
+    // Données structurées issues du tableau du 14 août 2026
+    const lawsData = [
+      {
+        id: "aide-a-mourir",
+        title: "Loi « Aide à mourir »",
+        status: "validee",
+        statusLabel: "Validée",
+        favorable: "Centre / Gauche",
+        defavorable: "Droite",
+        colorBadge: "emerald",
+        analysis: "Le Conseil constitutionnel a jugé le texte conforme aux principes constitutionnels en considérant que la liberté individuelle et le principe de dignité de la personne permettent au législateur d'aménager la fin de vie, dès lors que des garde-fous stricts (consentement libre et éclairé, collégialité médicale) écartent l'atteinte au droit à la vie.",
+        basis: "Article 61 Constitution • Principe de sauvegarde de la dignité humaine & liberté individuelle"
+      },
+      {
+        id: "reseaux-sociaux",
+        title: "Réseaux sociaux -15 ans",
+        status: "censuree",
+        statusLabel: "Censurée",
+        favorable: "Gauche",
+        defavorable: "Droite",
+        colorBadge: "rose",
+        analysis: "Le Conseil a prononcé une censure totale ou partielle du dispositif d'interdiction stricte. Motif : bien que la protection de l'enfance soit un objectif à valeur constitutionnelle, l'interdiction générale et les moyens de contrôle d'identité constituent une atteinte disproportionnée à la liberté d'expression, de communication (art. 11 DDHC) et au respect de la vie privée.",
+        basis: "Article 11 Déclaration des Droits de l'Homme et du Citoyen de 1789 • Proportionnalité des peines et libertés"
+      },
+      {
+        id: "duplomb-2",
+        title: "Loi « Duplomb 2 »",
+        status: "validee",
+        statusLabel: "Validée",
+        favorable: "Droite / RN",
+        defavorable: "Gauche / Écolos",
+        colorBadge: "emerald",
+        analysis: "Validation des mesures d'assouplissement agricole et de gestion de l'eau. Le Conseil constitutionnel a estimé que le législateur a opéré une conciliation équilibrée entre la préservation de l'environnement (Charte de 2004) et la sauvegarde de la souveraineté alimentaire nationale adossée à la liberté d'entreprendre.",
+        basis: "Charte de l'environnement de 2004 • Liberté d'entreprendre (décision 82-141 DC)"
+      }
+    ];
+
+    let currentFilter = 'all';
+    let quizIndex = 0;
+    let quizScore = 0;
+
+    // Rendu du tableau interactif
+    function renderTable() {
+      const container = document.getElementById('tableBody');
+      container.innerHTML = '';
+
+      const filtered = lawsData.filter(item => {
+        if (currentFilter === 'all') return true;
+        return item.status === currentFilter;
+      });
+
+      filtered.forEach((item) => {
+        const isValidee = item.status === 'validee';
+        const badgeBg = isValidee 
+          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
+          : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800';
+
+        const row = document.createElement('div');
+        row.className = "grid grid-cols-1 sm:grid-cols-12 p-3.5 sm:p-4 gap-2.5 items-center hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition cursor-pointer";
+        row.onclick = () => showDetails(item.id);
+
+        row.innerHTML = `
+          <div class="sm:col-span-6 flex items-center justify-between sm:justify-start gap-2">
+            <span class="font-medium text-sm text-slate-900 dark:text-white flex items-center gap-2">
+              <span class="text-xs text-slate-400">•</span>
+              ${item.title}
+            </span>
+            <span class="px-2 py-0.5 text-[11px] font-mono rounded-md border ${badgeBg}">
+              ${item.statusLabel}
+            </span>
+          </div>
+
+          <div class="sm:col-span-6 flex flex-col gap-1 text-xs text-slate-600 dark:text-zinc-300 pl-4 sm:pl-0 border-l sm:border-l-0 border-slate-200 dark:border-zinc-700">
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono text-[10px] uppercase text-emerald-600 dark:text-emerald-400 font-semibold w-16">Favorable</span>
+              <span class="font-medium text-slate-800 dark:text-zinc-200">: ${item.favorable}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono text-[10px] uppercase text-rose-600 dark:text-rose-400 font-semibold w-16">Défavor.</span>
+              <span class="font-medium text-slate-800 dark:text-zinc-200">: ${item.defavorable}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // Gestion du panneau de détail
+    function showDetails(id) {
+      const item = lawsData.find(l => l.id === id);
+      if (!item) return;
+      const card = document.getElementById('detailCard');
+      document.getElementById('detailTitle').textContent = `${item.title} — Débat et Fondement constitutionnel`;
+      document.getElementById('detailContent').textContent = item.analysis;
+      document.getElementById('detailBasis').textContent = `⚖️ ${item.basis}`;
+      card.classList.remove('hidden');
+    }
+
+    function closeDetails() {
+      document.getElementById('detailCard').classList.add('hidden');
+    }
+
+    // Filtres
+    function filterDecisions(type) {
+      currentFilter = type;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-50', 'dark:bg-blue-900/40', 'text-blue-600', 'dark:text-blue-300');
+      });
+      event.target.classList.add('bg-blue-50', 'dark:bg-blue-900/40', 'text-blue-600', 'dark:text-blue-300');
+      renderTable();
+    }
+
+    // Mode Quiz interactif
+    const quizQuestions = [
+      {
+        question: "1. Quel a été le sort réservé à la loi « Aide à mourir » le 14 août 2026 ?",
+        options: ["Validée", "Censurée"],
+        correctIndex: 0,
+        explanation: "Validée : Le Conseil a considéré que la dignité et la liberté personnelle permettaient au législateur d'autoriser l'aide sous de strictes conditions médicales (Favorable : Centre/Gauche)."
+      },
+      {
+        question: "2. Pourquoi la loi « Réseaux sociaux -15 ans » a-t-elle été censurée ?",
+        options: ["Atteinte excessive à la liberté d'expression / proportionnalité", "Incompétence du Premier ministre"],
+        correctIndex: 0,
+        explanation: "Censurée : Malgré l'objectif de protection de l'enfance, le Conseil constitutionnel a sanctionné une atteinte disproportionnée à la liberté d'expression et à la vie privée."
+      },
+      {
+        question: "3. Quel groupe politique était favorable à la loi « Duplomb 2 » (validée) ?",
+        options: ["Gauche / Écolos", "Droite / RN"],
+        correctIndex: 1,
+        explanation: "La Droite et le RN soutenaient la loi Duplomb 2 axée sur la souveraineté alimentaire, tandis que la Gauche et les Écolos s'y opposaient au titre de la Charte de l'environnement."
+      }
+    ];
+
+    function renderQuizStep() {
+      const q = quizQuestions[quizIndex];
+      document.getElementById('quizCounter').textContent = `Question ${quizIndex + 1} / ${quizQuestions.length}`;
+      document.getElementById('quizQuestion').textContent = q.question;
+      document.getElementById('quizFeedback').className = "hidden text-xs p-3 rounded-lg border text-left leading-relaxed";
+      document.getElementById('nextQuizBtn').classList.add('hidden');
+
+      const optContainer = document.getElementById('quizOptions');
+      optContainer.innerHTML = '';
+
+      q.options.forEach((optText, index) => {
+        const btn = document.createElement('button');
+        btn.className = "py-2 px-3 text-xs font-medium rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 transition";
+        btn.textContent = optText;
+        btn.onclick = () => checkQuiz(index);
+        optContainer.appendChild(btn);
+      });
+    }
+
+    function checkQuiz(selectedIndex) {
+      const q = quizQuestions[quizIndex];
+      const feedback = document.getElementById('quizFeedback');
+      const isCorrect = selectedIndex === q.correctIndex;
+
+      if (isCorrect) {
+        quizScore += 1;
+        feedback.className = "text-xs p-3 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-left block";
+        feedback.innerHTML = `<strong>✓ Exact !</strong> ${q.explanation}`;
+      } else {
+        feedback.className = "text-xs p-3 rounded-lg border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 text-left block";
+        feedback.innerHTML = `<strong>✗ Incorrect.</strong> ${q.explanation}`;
+      }
+
+      document.getElementById('quizScoreBadge').textContent = `Score : ${quizScore} / ${quizQuestions.length}`;
+      document.getElementById('nextQuizBtn').classList.remove('hidden');
+
+      // Désactiver les options après clic
+      document.querySelectorAll('#quizOptions button').forEach(b => b.disabled = true);
+    }
+
+    function nextQuizStep() {
+      quizIndex++;
+      if (quizIndex < quizQuestions.length) {
+        renderQuizStep();
+      } else {
+        document.getElementById('quizQuestion').textContent = `🎉 Quiz terminé ! Score final : ${quizScore} / ${quizQuestions.length}`;
+        document.getElementById('quizOptions').innerHTML = '';
+        document.getElementById('quizFeedback').className = "hidden";
+        document.getElementById('nextQuizBtn').classList.add('hidden');
+      }
+    }
+
+    function resetQuiz() {
+      quizIndex = 0;
+      quizScore = 0;
+      document.getElementById('quizScoreBadge').textContent = "Score : 0";
+      renderQuizStep();
+    }
+
+    // Gestion des onglets
+    function setTab(tab) {
+      const vTable = document.getElementById('viewTable');
+      const vQuiz = document.getElementById('viewQuiz');
+      const tabT = document.getElementById('tabTable');
+      const tabQ = document.getElementById('tabQuiz');
+
+      if (tab === 'table') {
+        vTable.classList.remove('hidden');
+        vQuiz.classList.add('hidden');
+        tabT.className = "px-2.5 py-1 rounded-md bg-white dark:bg-zinc-700 shadow-sm text-slate-900 dark:text-white transition";
+        tabQ.className = "px-2.5 py-1 rounded-md text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition";
+      } else {
+        vTable.classList.add('hidden');
+        vQuiz.classList.remove('hidden');
+        tabQ.className = "px-2.5 py-1 rounded-md bg-white dark:bg-zinc-700 shadow-sm text-slate-900 dark:text-white transition";
+        tabT.className = "px-2.5 py-1 rounded-md text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition";
+        renderQuizStep();
+      }
+    }
+
+    // Bascule Dark / Light
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.classList.toggle('dark');
+      const isDark = html.classList.contains('dark');
+      document.getElementById('themeEmoji').textContent = isDark ? '🌙' : '☀️';
+    }
+
+    // Initialisation
+    renderTable();
+  </script>
+</body>
+</html>
